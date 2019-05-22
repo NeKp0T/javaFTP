@@ -2,15 +2,10 @@ package com.example.ftp.client;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.nio.channels.spi.SelectorProvider;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.nio.file.Path;
-import java.security.DigestInputStream;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -24,18 +19,13 @@ public class Server {
     private int port = 2599;
 
     /**
-     * Host
-     */
-    private String HOST = "127.0.0.1";
-
-    /**
      * Listen socket address
      */
     private InetSocketAddress address;
 
     private Selector selector;
 
-    public Server(String address, int port) throws IOException {
+    public Server(String address, int port) {
         this.port = port;
         this.address = new InetSocketAddress(address, port);
     }
@@ -55,10 +45,7 @@ public class Server {
             Iterator iterator = readyKeys.iterator();
             while (iterator.hasNext()) {
                 SelectionKey key = (SelectionKey) iterator.next();
-
-                // Remove key from set so we don't process it twice
                 iterator.remove();
-
                 if (!key.isValid()) {
                     continue;
                 }
@@ -67,7 +54,6 @@ public class Server {
                 } else if (key.isReadable()) { // Read from client
                     read(key);
                 } else if (key.isWritable()) {
-                    //write(key);
                 }
             }
         }
@@ -77,7 +63,6 @@ public class Server {
         SocketChannel newChannel = ((ServerSocketChannel) key.channel()).accept();
         newChannel.configureBlocking(false);
         newChannel.register(key.selector(), SelectionKey.OP_READ);
-
     }
 
     private void read(SelectionKey key) throws IOException {
@@ -117,8 +102,6 @@ public class Server {
         buffer.clear();
         key.interestOps(key.interestOps() ^ SelectionKey.OP_WRITE);
     }
-
-    File dir1 = new File("C://SomeDir");
 
     private ByteBuffer listRequest(String path) {
         String message = "";
