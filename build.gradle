@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+}
+
+group 'com.example'
+version '1.0'
+
+
+sourceCompatibility = 11
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.4.0-M1'
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.4.0-M1'
+    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.4.0-M1'
+    testCompile group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.4.0-M1'
+
+    // https://mvnrepository.com/artifact/org.jetbrains/annotations
+    compile group: 'org.jetbrains', name: 'annotations', version: '17.0.0'
+    // https://mvnrepository.com/artifact/com.google.guava/guava
+    testCompile group: 'com.google.guava', name: 'guava', version: '27.0.1-jre'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'PASSED', 'FAILED', 'SKIPPED'
+//        events 'FAILED', 'SKIPPED'
+    }
+}
