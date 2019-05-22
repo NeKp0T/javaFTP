@@ -16,7 +16,7 @@ public class Server {
     /**
      * Port
      */
-    private int port = 2599;
+    private int port;
 
     /**
      * Listen socket address
@@ -41,8 +41,15 @@ public class Server {
 
         System.out.println("server started");
         while (true) {
+
+            int readyCount = selector.select();
+            if (readyCount == 0) {
+                continue;
+            }
+
             Set<SelectionKey> readyKeys = selector.selectedKeys();
             Iterator iterator = readyKeys.iterator();
+
             while (iterator.hasNext()) {
                 SelectionKey key = (SelectionKey) iterator.next();
                 iterator.remove();
@@ -60,6 +67,7 @@ public class Server {
     }
 
     private void accept(SelectionKey key) throws IOException {
+        System.out.println("accept");
         SocketChannel newChannel = ((ServerSocketChannel) key.channel()).accept();
         newChannel.configureBlocking(false);
         newChannel.register(key.selector(), SelectionKey.OP_READ);
