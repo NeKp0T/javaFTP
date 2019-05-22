@@ -12,9 +12,25 @@ public class ClientApplication {
 //            return;
 //        }
 
-        String address;
-        try (var scanner = new Scanner(new InputStreamReader(System.in))) {
-            address = scanner.next();
+        String address = "127.0.0.1";
+//        try (var scanner = new Scanner(new InputStreamReader(System.in))) {
+//            address = scanner.next();
+//        }
+
+        var serv = new Server("127.0.0.1", 2599);
+
+        new Thread(() -> {
+            try {
+                serv.startServer();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         try {

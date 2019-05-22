@@ -35,7 +35,7 @@ public class Server {
 
     private Selector selector;
 
-    public Server(String address, int port) throws IOException {
+    public Server(String address, int port) {
         this.port = port;
         this.address = new InetSocketAddress(address, port);
     }
