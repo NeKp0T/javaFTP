@@ -1,7 +1,6 @@
 package com.example.ftp.client;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -11,6 +10,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.file.Path;
+import java.security.DigestInputStream;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -21,26 +21,32 @@ public class Server {
     /**
      * Port
      */
-    private static final int PORT = 2599;
+    private int port = 2599;
 
     /**
      * Host
      */
-    private String host;
+    private String HOST = "127.0.0.1";
 
     /**
      * Listen socket address
      */
-    private InetSocketAddress adress;
+    private InetSocketAddress address;
 
     private Selector selector;
+
+    public Server(String address, int port) throws IOException {
+        this.port = port;
+        this.address = new InetSocketAddress(address, port);
+    }
 
     public void startServer() throws IOException {
         selector = Selector.open();
         ServerSocketChannel serverChannel = ServerSocketChannel.open();
         serverChannel.configureBlocking(false);
 
-        serverChannel.socket().bind(adress);
+
+        serverChannel.socket().bind(address);
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         System.out.println("server started");
@@ -88,23 +94,32 @@ public class Server {
         buffer.flip();
         String request = decoder.decode(buffer).toString();
         System.out.println("request: " + request);
+        String path = request.substring(2, request.length() - 1);
 
         int requestType = request.charAt(0);
         switch (requestType) {
             case 1:
-                listRequest(path);
+                ByteBuffer listRequest = listRequest(path);
+                while (listRequest.hasRemaining()) {
+                    channel.write(listRequest);
+                }
+                listRequest.clear();
                 break;
             case 2:
-                getRequest(path);
+                ByteBuffer getRequest = getRequest(path);
+                while (getRequest.hasRemaining()) {
+                    channel.write(getRequest);
+                }
+                getRequest.clear();
         }
 
         buffer.clear();
+        key.interestOps(key.interestOps() ^ SelectionKey.OP_WRITE);
     }
 
     File dir1 = new File("C://SomeDir");
 
-    private void listRequest(SelectionKey key, String path) throws IOException {
-        SocketChannel channel = ((SocketChannel) key.channel());
+    private ByteBuffer listRequest(String path) {
         String message = "";
         File directory = new File(path);
         File[] files;
@@ -131,10 +146,41 @@ public class Server {
         ByteBuffer buffer = ByteBuffer.allocate(Math.max(messageBytes.length, BUFFER_SIZE));
         buffer.put(messageBytes);
         buffer.flip();
-        while (buffer.hasRemaining()) {
-            channel.write(buffer);
+        return buffer;
+    }
+
+    private static String readUsingBufferedReader(String fileName) throws IOException {
+        BufferedReader reader = new BufferedReader( new FileReader(fileName));
+        String line;
+        StringBuilder stringBuilder = new StringBuilder();
+        String ls = System.getProperty("line.separator");
+        while( ( line = reader.readLine() ) != null ) {
+            stringBuilder.append( line );
+            stringBuilder.append( ls );
         }
-        buffer.clear();
-        key.interestOps(key.interestOps() ^ SelectionKey.OP_WRITE);
+
+        stringBuilder.deleteCharAt(stringBuilder.length()-1);
+        return stringBuilder.toString();
+    }
+
+
+    private ByteBuffer getRequest(String path) throws IOException {
+        String message = "";
+        File file = new File(path);
+        File[] files;
+        if (file.exists() && file.isFile()) {
+            message += file.getTotalSpace() + " ";
+            message += readUsingBufferedReader(path);
+        } else {
+            message += -1;
+        }
+
+        Charset charset = Charset.forName("ISO-8859-1");
+
+        byte[] messageBytes = message.getBytes(charset);
+        ByteBuffer buffer = ByteBuffer.allocate(Math.max(messageBytes.length, BUFFER_SIZE));
+        buffer.put(messageBytes);
+        buffer.flip();
+        return buffer;
     }
 }
