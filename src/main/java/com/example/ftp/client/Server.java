@@ -50,24 +50,25 @@ public class Server {
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         System.out.println("server started");
+        while (true) {
+            Set<SelectionKey> readyKeys = selector.selectedKeys();
+            Iterator iterator = readyKeys.iterator();
+            while (iterator.hasNext()) {
+                SelectionKey key = (SelectionKey) iterator.next();
 
-        Set<SelectionKey> readyKeys = selector.selectedKeys();
-        Iterator iterator = readyKeys.iterator();
-        while (iterator.hasNext()) {
-            SelectionKey key = (SelectionKey) iterator.next();
+                // Remove key from set so we don't process it twice
+                iterator.remove();
 
-            // Remove key from set so we don't process it twice
-            iterator.remove();
-
-            if (!key.isValid()) {
-                continue;
-            }
-            if (key.isAcceptable()) { // Accept client connections
-                accept(key);
-            } else if (key.isReadable()) { // Read from client
-                read(key);
-            } else if (key.isWritable()) {
-                //write(key);
+                if (!key.isValid()) {
+                    continue;
+                }
+                if (key.isAcceptable()) { // Accept client connections
+                    accept(key);
+                } else if (key.isReadable()) { // Read from client
+                    read(key);
+                } else if (key.isWritable()) {
+                    //write(key);
+                }
             }
         }
     }
@@ -167,7 +168,6 @@ public class Server {
     private ByteBuffer getRequest(String path) throws IOException {
         String message = "";
         File file = new File(path);
-        File[] files;
         if (file.exists() && file.isFile()) {
             message += file.getTotalSpace() + " ";
             message += readUsingBufferedReader(path);
