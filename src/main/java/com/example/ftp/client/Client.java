@@ -40,6 +40,8 @@ public class Client {
         }
         buffer.clear();
 
+        System.out.println("Request sent: " + request);
+
         var wholeAnswerBuilder = new StringBuilder();
 
         while (true) {
@@ -54,6 +56,10 @@ public class Client {
             String answer = decoder.decode(buffer).toString();
             wholeAnswerBuilder.append(answer);
             buffer.clear();
+
+            if (answer.length() != 0) {
+                System.out.println("Got: " + answer);
+            }
 
             if (!answer.chars().allMatch(Character::isDigit)) {
                 break;
