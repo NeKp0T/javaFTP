@@ -12,12 +12,12 @@ public class ClientApplication {
 //            return;
 //        }
 
-        String address = "127.0.0.1";
+        String address = "localhost";
 //        try (var scanner = new Scanner(new InputStreamReader(System.in))) {
 //            address = scanner.next();
 //        }
 
-        var serv = new Server("127.0.0.1", 2599);
+        var serv = new Server(address, 2599);
 
         new Thread(() -> {
             try {
@@ -28,7 +28,7 @@ public class ClientApplication {
         }).start();
 
         try {
-            Thread.sleep(500);
+            Thread.sleep(1500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -36,6 +36,13 @@ public class ClientApplication {
         try {
             Client client = Client.connect(address);
             System.out.println(client.listRequest("/"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Client client2 = Client.connect(address);
+            System.out.println(client2.listRequest("/"));
         } catch (IOException e) {
             e.printStackTrace();
         }

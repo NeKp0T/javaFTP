@@ -1,6 +1,7 @@
 package com.example.ftp.client;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -17,11 +18,12 @@ public class Client {
 
     public static Client connect(String address) throws IOException {
         SocketChannel socketChannel = SocketChannel.open();
-        socketChannel.configureBlocking(false);
-        socketChannel.connect(new InetSocketAddress(address, PORT));
+//        socketChannel.configureBlocking(false);
+        socketChannel.connect(new InetSocketAddress(InetAddress.getByName("localhost"), 2599));
 
         //noinspection StatementWithEmptyBody
         while (!socketChannel.finishConnect());
+        socketChannel.socket().setTcpNoDelay(true);
 
         return new Client(socketChannel);
     }
@@ -39,8 +41,8 @@ public class Client {
             socketChannel.write(buffer);
         }
         buffer.clear();
+        System.out.println("Client sent");
 
-        System.out.println("Request sent: " + request);
 
         var wholeAnswerBuilder = new StringBuilder();
 
@@ -48,25 +50,22 @@ public class Client {
             CharsetDecoder decoder = charset.newDecoder();
 
             int bytesRead = socketChannel.read(buffer);
-            if (bytesRead == -1) {
-                socketChannel.close();
-                break;
-            }
+//            if (bytesRead == -1) {
+//                socketChannel.close();
+//                break;
+//            }
             buffer.flip();
             String answer = decoder.decode(buffer).toString();
             wholeAnswerBuilder.append(answer);
             buffer.clear();
 
-            if (answer.length() != 0) {
-                System.out.println("Got: " + answer);
-            }
-
-            if (!answer.chars().allMatch(Character::isDigit)) {
+            if (wholeAnswerBuilder.toString().length() < 2) {
                 break;
             }
         }
 
         String gotSoFar = wholeAnswerBuilder.toString();
+        System.out.println("got " + gotSoFar);
 
         int size = Integer.parseInt(gotSoFar);
         if (size < 0) {
