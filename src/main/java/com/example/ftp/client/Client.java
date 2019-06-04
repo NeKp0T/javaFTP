@@ -2,13 +2,13 @@ package com.example.ftp.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
-import java.util.List;;
+import java.util.ArrayList;
+;
 
 public class Client {
 
@@ -33,7 +33,7 @@ public class Client {
         return new Client(socketChannel);
     }
 
-    public List<String> listRequest(String path) throws IOException {
+    public ArrayList<FileDescription> listRequest(String path) throws IOException {
 
         byte[] requestBytes = path.getBytes(charset);
 
@@ -88,8 +88,23 @@ public class Client {
         return parseListRequest(answer);
     }
 
-    private static List<String> parseListRequest(String answer) {
-        return List.of(answer); // TODO
+    private static ArrayList<FileDescription> parseListRequest(String answer) {
+        int itemsCount = Integer.parseInt(answer.substring(0, answer.indexOf(' ')));
+
+        int beginning = answer.indexOf("(");
+        String contents = answer.substring(beginning + 1, answer.length() - beginning - 2);
+
+        String[] splitted = contents.split("\\) \\(");
+
+        var result = new ArrayList<FileDescription>();
+        for (String s : splitted) {
+            FileDescription file = FileDescription.valueOf(s);
+            if (file != null) {
+                result.add(file);
+            }
+        }
+
+        return result;
     }
 
     private Client(SocketChannel socketChannel) {
