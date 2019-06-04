@@ -8,7 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
-;
+;import static java.lang.Integer.max;
 
 public class Client {
 
@@ -89,7 +89,7 @@ public class Client {
     }
 
     private static ArrayList<FileDescription> parseListRequest(String answer) {
-        int itemsCount = Integer.parseInt(answer.substring(0, answer.indexOf(' ')));
+        int itemsCount = Integer.parseInt(answer.substring(0, max(answer.indexOf(' '), answer.length())));
 
         int beginning = answer.indexOf("(");
         String contents = answer.substring(beginning + 1, answer.length() - beginning - 2);
