@@ -172,13 +172,14 @@ public class ClientInfo {
 
         byte[] result = message.getBytes(charset);
 
-        size = result.length + sizeBuffer.limit();
         sizeBuffer.clear();
         sizeBuffer.putInt(result.length);
         sizeBuffer.flip();
         resultBuffer.clear(); // probably already clear TODO delete
         resultBuffer.put(result);
         resultBuffer.flip();
+
+        size = resultBuffer.limit() + sizeBuffer.limit();
 
         System.out.println("Serv: generated message size: " + size);
         } catch (CharacterCodingException e) {

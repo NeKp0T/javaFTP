@@ -7,8 +7,8 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
-;
 
+// TODO javadoc
 public class Client {
 
     private static final int PORT = 2599;
@@ -166,7 +166,7 @@ public class Client {
         try {
             fileSize = Long.parseLong(answer.substring(0, longEnd));
         } catch (NumberFormatException e) {
-            return new GetRequestAnswer(0, null, RequestStatus.CRITICAL_ERROR);
+            return GetRequestAnswer.error();
         }
 
         if (fileSize == -1) {
@@ -174,7 +174,7 @@ public class Client {
         }
 
         if (longEnd + 1 > answer.length()) {
-            return new GetRequestAnswer(fileSize, "", RequestStatus.ERROR);
+            return new GetRequestAnswer(fileSize, null, RequestStatus.ERROR);
         }
 
         return new GetRequestAnswer(fileSize, answer.substring(longEnd + 1), RequestStatus.OK);
