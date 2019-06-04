@@ -9,7 +9,7 @@ public class FileDescription {
     private boolean directory;
 
     @Nullable
-    public static FileDescription valueOf(String s) {
+    public static FileDescription parse(String s) {
         if (s.length() < 3) {
             return null;
         }

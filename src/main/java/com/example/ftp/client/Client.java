@@ -33,7 +33,7 @@ public class Client {
         return new Client(socketChannel);
     }
 
-    public ArrayList<FileDescription> listRequest(String path) throws IOException {
+    public ListRequestAnswer listRequest(String path) throws IOException {
 
         byte[] requestBytes = path.getBytes(charset);
 
@@ -88,23 +88,39 @@ public class Client {
         return parseListRequest(answer);
     }
 
-    private static ArrayList<FileDescription> parseListRequest(String answer) {
-        int itemsCount = Integer.parseInt(answer.substring(0, max(answer.indexOf(' '), answer.length())));
+    private static ListRequestAnswer parseListRequest(String answer) {
+        int itemsCount;
+        try {
+            int intEnd = answer.indexOf(' ');
+            if (intEnd == -1) {
+                intEnd = answer.length();
+            }
+            itemsCount = Integer.parseInt(answer.substring(0, intEnd));
+        } catch (NumberFormatException e) {
+            return new ListRequestAnswer(RequestResult.CRITICAL_ERROR);
+        }
+
+        if (itemsCount == -1) {
+            return new ListRequestAnswer(RequestResult.WRONG_PATH);
+        }
 
         int beginning = answer.indexOf("(");
         String contents = answer.substring(beginning + 1, answer.length() - beginning - 2);
 
         String[] splitted = contents.split("\\) \\(");
 
+        var status = RequestResult.OK;
         var result = new ArrayList<FileDescription>();
         for (String s : splitted) {
-            FileDescription file = FileDescription.valueOf(s);
+            FileDescription file = FileDescription.parse(s);
             if (file != null) {
                 result.add(file);
+            } else {
+                status = RequestResult.ERROR;
             }
         }
 
-        return result;
+        return new ListRequestAnswer(result, status);
     }
 
     private Client(SocketChannel socketChannel) {
