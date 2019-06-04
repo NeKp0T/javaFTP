@@ -10,14 +10,14 @@ public class ListRequestAnswer {
     @NotNull
     public final List<FileDescription> files;
     @NotNull
-    public final RequestResult status;
+    public final RequestStatus status;
 
-    public ListRequestAnswer(@NotNull List<FileDescription> files, @NotNull RequestResult status) {
+    public ListRequestAnswer(@NotNull List<FileDescription> files, @NotNull RequestStatus status) {
         this.files = files;
         this.status = status;
     }
 
-    public ListRequestAnswer(@NotNull RequestResult status) {
+    public ListRequestAnswer(@NotNull RequestStatus status) {
         this(new ArrayList<>(), status);
     }
 

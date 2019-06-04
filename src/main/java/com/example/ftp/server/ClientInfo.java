@@ -151,11 +151,6 @@ public class ClientInfo {
         }
     }
 
-    public void finishWriting() {
-        clean();
-        status = READING;
-    }
-
     public void submit() {
         try {
             var id = idBuffer.getInt();
@@ -177,8 +172,7 @@ public class ClientInfo {
 
         byte[] result = message.getBytes(charset);
 
-        size = resultBuffer.limit() + sizeBuffer.limit();
-
+        size = result.length + sizeBuffer.limit();
         sizeBuffer.clear();
         sizeBuffer.putInt(result.length);
         sizeBuffer.flip();
@@ -192,5 +186,10 @@ public class ClientInfo {
             status = FAILED;
             System.out.println("submit write");
         }
+    }
+
+    public void finishWriting() {
+        clean();
+        status = READING;
     }
 }

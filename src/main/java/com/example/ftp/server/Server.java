@@ -193,8 +193,7 @@ public class Server {
      * @throws IOException when can't accept new client
      */
     private void accept() throws IOException {
-        System.out.println("accept started");
-        var channel = serverChannel.accept();
+        SocketChannel channel = serverChannel.accept();
         channel.configureBlocking(false);
         channel.register(readingSelector, SelectionKey.OP_READ, new ClientInfo(channel));
     }
@@ -205,7 +204,6 @@ public class Server {
      * @throws IOException when can't close client channel
      */
     private void read(SelectionKey key) throws IOException {
-        //System.out.println("read started");
         var clientInfo = (ClientInfo) key.attachment();
 
         switch (clientInfo.status) {
