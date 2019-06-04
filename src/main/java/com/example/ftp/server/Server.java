@@ -160,14 +160,12 @@ public class Server {
     }
 
     private void accept() throws IOException {
-        System.out.println("accept started");
         SocketChannel channel = serverChannel.accept();
         channel.configureBlocking(false);
         channel.register(readingSelector, SelectionKey.OP_READ, new ClientInfo(channel));
     }
 
     private void read(SelectionKey key) throws IOException {
-        //System.out.println("read started");
         ClientInfo clientInfo = (ClientInfo) key.attachment();
 
         if (clientInfo.status == READING) {
@@ -175,14 +173,13 @@ public class Server {
         }
 
         if (clientInfo.status == READ_FINISHED) {
+            System.out.println("Serv finished read, " + clientInfo.status);
             clientInfo.status = SUBMITTING;
-            System.out.println(clientInfo.byteRead);
             service.submit(new Server.RequestTask(clientInfo));
         }
     }
 
     private void write(SelectionKey key) throws IOException {
-//        System.out.println("write started");
         ClientInfo clientInfo = (ClientInfo) key.attachment();
 
         if (clientInfo.status == WRITING) {
@@ -192,7 +189,7 @@ public class Server {
         if (clientInfo.status == WRITE_FINISHED) {
             //clientInfo.request.status = NONE; //TODO unsubscribe
             clientInfo.finishWriting();
-            key.interestOpsAnd(~SelectionKey.OP_READ);
+//            key.interestOpsAnd(~SelectionKey.OP_READ);
         }
     }
 

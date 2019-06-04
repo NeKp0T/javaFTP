@@ -1,8 +1,13 @@
-package com.example.ftp.client;
+package com.example.ftp;
 
+import com.example.ftp.client.Client;
 import com.example.ftp.server.Server;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Scanner;
 
 public class ClientApplication {
 
@@ -33,18 +38,27 @@ public class ClientApplication {
             e.printStackTrace();
         }
 
+        Client client;
         try {
-            Client client = Client.connect(address);
-            System.out.println("Client: got list request answer: " + client.listRequest("/"));
+            client = Client.connect(address);
         } catch (IOException e) {
             e.printStackTrace();
+            return;
         }
 
-        try {
-            Client client = Client.connect(address);
-            System.out.println("Client: got list request answer: " + client.listRequest("/kek"));
-        } catch (IOException e) {
-            e.printStackTrace();
+        var sc = new Scanner(System.in);
+
+        while (true) {
+            String type = sc.next();
+            try {
+                if ("list".equals(type)) {
+                    System.out.println(client.listRequest(sc.next()));
+                } else if ("get".equals(type)) {
+                    System.out.println(client.getRequest(sc.next()));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

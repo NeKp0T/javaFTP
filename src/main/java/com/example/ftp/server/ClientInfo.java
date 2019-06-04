@@ -47,31 +47,25 @@ public class ClientInfo {
         idBuffer.clear();
         sizeBuffer.clear();
         pathBuffer.clear();
+        resultBuffer.clear();
         size = -1;
         byteRead = 0;
         byteWrite = 0;
     }
 
     public void read() throws IOException {
-
-//        System.out.println(decoder.decode(idBuffer).toString());
         byteRead += channel.read(bufferRead); // TODO if it returns -1
-        System.out.println("Serv: Read " + byteRead + " bytes");
 
         if (size == -1 && byteRead >= 2 * SMALL_BUFFER_SIZE) {
             sizeBuffer.flip();
             idBuffer.flip();
             size = sizeBuffer.getInt();
             byteRead -= 2 * SMALL_BUFFER_SIZE;
-
-            System.out.println("Serv: Size " + size);
         }
 
         if (size != -1 && byteRead >= size) {
             status = READ_FINISHED;
             pathBuffer.flip();
-
-            System.out.println("request received");
         }
     }
 
@@ -79,7 +73,6 @@ public class ClientInfo {
         byteWrite += channel.write(bufferWrite);
         if (size == byteWrite) {
             status = WRITE_FINISHED;
-            System.out.println("result done");
             cleanBuffers();
         }
     }
@@ -87,7 +80,6 @@ public class ClientInfo {
     public void submit() throws IOException {
         var id = idBuffer.getInt();
         var path = decoder.decode(pathBuffer).toString();
-        System.out.println("Serv: Got path " + path + ", id " + id);
 
         String message = "";
         switch (id) {
@@ -98,14 +90,13 @@ public class ClientInfo {
                 message = Server.get(path);
                 break;
             default:
-                System.out.println("Unknown id");
+                System.out.println("ClientInfo: Unknown id"); // TODO delete debug output
                 throw new IOException("Got wrong id"); // TODO mb make the exception class
         }
 
         byte[] result = message.getBytes(charset);
 
-        size = resultBuffer.limit() + sizeBuffer.limit();
-
+        size = result.length + sizeBuffer.limit();
         sizeBuffer.clear();
         sizeBuffer.putInt(result.length);
         sizeBuffer.flip();
@@ -113,8 +104,6 @@ public class ClientInfo {
         resultBuffer.clear(); // probably already clear TODO delete
         resultBuffer.put(result);
         resultBuffer.flip();
-
-        System.out.println("Serv: generated message size: " + size);
     }
 
     public void finishWriting() {
