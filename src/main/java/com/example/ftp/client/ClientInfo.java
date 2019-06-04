@@ -8,8 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 
-import static com.example.ftp.client.RequestStatus.READ_FINISHED;
-import static com.example.ftp.client.RequestStatus.WRITE_FINISHED;
+import static com.example.ftp.client.RequestStatus.*;
 
 public class ClientInfo {
 
@@ -39,6 +38,7 @@ public class ClientInfo {
 
     ClientInfo(SocketChannel channel) {
         this.channel = channel;
+        status = READING;
     }
 
     private void cleanBuffers() {
@@ -50,6 +50,7 @@ public class ClientInfo {
 
     public void read() throws IOException {
 
+        System.out.println(decoder.decode(idBuffer).toString());
         byteRead += channel.read(bufferRead);
 
         if (size == -1 && byteRead >= 2 * SMALL_BUFFER_SIZE) {
@@ -84,8 +85,10 @@ public class ClientInfo {
                 message = Server.get(path);
                 break;
         }
+
+        byte[] result = message.getBytes(charset);
         sizeBuffer = encoder.encode(CharBuffer.wrap(String.valueOf(message.getBytes().length)));
-        resultBuffer = encoder.encode(CharBuffer.wrap(message));
-        size = message.getBytes().length + 4;
+        resultBuffer.put(result);
+        size = result.length + 4;
     }
 }

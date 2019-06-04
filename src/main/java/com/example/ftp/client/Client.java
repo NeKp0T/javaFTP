@@ -6,12 +6,18 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.util.List;;
 
 public class Client {
 
     private static final int PORT = 2599;
     private static final int BUFF_SIZE = 200;
+
+
+    public static Charset charset = Charset.forName("UTF-8");
+    public static CharsetEncoder encoder = charset.newEncoder();
+    public static CharsetDecoder decoder = charset.newDecoder();
 
     private final SocketChannel socketChannel;
 
@@ -27,20 +33,22 @@ public class Client {
     }
 
     public List<String> listRequest(String path) throws IOException {
-        Charset charset = Charset.forName("ISO-8859-1");
-        String request = "1 " + path + "#";
 
-        byte[] requestBytes = request.getBytes(charset);
+        byte[] requestBytes = path.getBytes(charset);
 
-        ByteBuffer buffer = ByteBuffer.allocate(Math.max(requestBytes.length, BUFF_SIZE));
+        ByteBuffer buffer = ByteBuffer.allocate(BUFF_SIZE);
+        buffer.putInt(1);
+        buffer.putInt(path.getBytes().length);
         buffer.put(requestBytes);
-        buffer.flip();
+
+
         while (buffer.hasRemaining()) {
             socketChannel.write(buffer);
         }
+
         buffer.clear();
 
-        System.out.println("Request sent: " + request);
+        System.out.println("Request sent: " + path);
 
         var wholeAnswerBuilder = new StringBuilder();
 

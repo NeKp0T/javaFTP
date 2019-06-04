@@ -50,6 +50,11 @@ public class Server {
      */
     private Selector writingSelector;
 
+    /**
+     * Selector for writing
+     */
+    private ServerSocketChannel serverChannel;
+
 
     public Server(String address, int port) {
         this.port = port;
@@ -61,10 +66,10 @@ public class Server {
         @Override
         public void run() {
             try {
-                ServerSocketChannel serverChannel = ServerSocketChannel.open();
+                serverChannel = ServerSocketChannel.open();
                 serverChannel.socket().bind(address);
                 while (!Thread.interrupted()) {
-                    accept(serverChannel);
+                    accept();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -91,7 +96,7 @@ public class Server {
         public void run() {
             try {
                 while (!Thread.interrupted()) {
-                    int readyCount = selector.select();
+                    int readyCount = selector.select(1000);
                     if (readyCount == 0) {
                         continue;
                     }
@@ -107,9 +112,13 @@ public class Server {
                         }
                         switch (mode) {
                             case READ:
-                                read(key);
+                                if (key.isReadable()) {
+                                    read(key);
+                                }
                             case WRITE:
-                                write(key);
+                                if (key.isWritable()) {
+                                    write(key);
+                                }
                         }
                     }
                 }
@@ -142,15 +151,15 @@ public class Server {
     public void start() throws IOException {
         readingSelector = Selector.open();
         writingSelector = Selector.open();
-        acceptingThread = new Thread(new AcceptTask());
-        acceptingThread.start();
         readingThread = new Thread(new ReadWriteTask(readingSelector, SelectorMode.READ));
         readingThread.start();
         writhingThread = new Thread(new ReadWriteTask(writingSelector, SelectorMode.WRITE));
         writhingThread.start();
+        acceptingThread = new Thread(new AcceptTask());
+        acceptingThread.start();
     }
 
-    private void accept(ServerSocketChannel serverChannel) throws IOException {
+    private void accept() throws IOException {
         System.out.println("accept started");
         SocketChannel channel = serverChannel.accept();
         channel.configureBlocking(false);
@@ -158,7 +167,7 @@ public class Server {
     }
 
     private void read(SelectionKey key) throws IOException {
-        System.out.println("read started");
+        //System.out.println("read started");
         ClientInfo clientInfo = (ClientInfo) key.attachment();
 
         if (clientInfo.status == READING) {
