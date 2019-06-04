@@ -1,4 +1,4 @@
-package com.example.ftp.client;
+package com.example.ftp.server;
 
 /**
  * Status of dealing with client process

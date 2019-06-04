@@ -1,4 +1,7 @@
-package com.example.ftp.client;
+package com.example.ftp.server;
+
+import com.example.ftp.server.RequestStatus;
+import com.example.ftp.server.Server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -7,7 +10,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
-import static com.example.ftp.client.RequestStatus.*;
+import static com.example.ftp.server.RequestStatus.*;
 
 /**
  * Class with information about

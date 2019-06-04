@@ -8,7 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
-;
+;import static java.lang.Integer.max;
 
 public class Client {
 
@@ -17,7 +17,6 @@ public class Client {
 
 
     public static Charset charset = Charset.forName("UTF-8");
-    public static CharsetEncoder encoder = charset.newEncoder();
     public static CharsetDecoder decoder = charset.newDecoder();
 
     private final SocketChannel socketChannel;
@@ -33,7 +32,7 @@ public class Client {
         return new Client(socketChannel);
     }
 
-    public ArrayList<FileDescription> listRequest(String path) throws IOException {
+    public ListRequestAnswer listRequest(String path) throws IOException {
 
         byte[] requestBytes = path.getBytes(charset);
 
@@ -57,7 +56,6 @@ public class Client {
 
         ByteBuffer[] buffers = {sizeBuffer, buffer};
 
-        CharsetDecoder decoder = charset.newDecoder();
         int read = 0;
         int size = -1;
         while (true) {
@@ -88,23 +86,39 @@ public class Client {
         return parseListRequest(answer);
     }
 
-    private static ArrayList<FileDescription> parseListRequest(String answer) {
-        int itemsCount = Integer.parseInt(answer.substring(0, answer.indexOf(' ')));
+    private static ListRequestAnswer parseListRequest(String answer) {
+        int itemsCount;
+        try {
+            int intEnd = answer.indexOf(' ');
+            if (intEnd == -1) {
+                intEnd = answer.length();
+            }
+            itemsCount = Integer.parseInt(answer.substring(0, intEnd));
+        } catch (NumberFormatException e) {
+            return new ListRequestAnswer(RequestResult.CRITICAL_ERROR);
+        }
+
+        if (itemsCount == -1) {
+            return new ListRequestAnswer(RequestResult.WRONG_PATH);
+        }
 
         int beginning = answer.indexOf("(");
         String contents = answer.substring(beginning + 1, answer.length() - beginning - 2);
 
         String[] splitted = contents.split("\\) \\(");
 
+        var status = RequestResult.OK;
         var result = new ArrayList<FileDescription>();
         for (String s : splitted) {
-            FileDescription file = FileDescription.valueOf(s);
+            FileDescription file = FileDescription.parse(s);
             if (file != null) {
                 result.add(file);
+            } else {
+                status = RequestResult.ERROR;
             }
         }
 
-        return result;
+        return new ListRequestAnswer(result, status);
     }
 
     private Client(SocketChannel socketChannel) {
