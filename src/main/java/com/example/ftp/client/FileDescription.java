@@ -4,18 +4,33 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+/**
+ * Holder for file(directory) description
+ */
 public class FileDescription {
+    /**
+     * Name of file
+     */
     private String name;
-    private boolean directory;
 
+    /**
+     * True if describing file is directory, false otherwise
+     */
+    private boolean isDirectory;
+
+    /**
+     * Parse file description from the string
+     * @param description string with description
+     * @return Object with file description
+     */
     @Nullable
-    public static FileDescription valueOf(String s) {
-        if (s.length() < 3) {
+    public static FileDescription valueOf(String description) {
+        if (description.length() < 3) {
             return null;
         }
 
-        char lastChar = s.charAt(s.length() - 1);
-        String name = s.substring(0, s.length() - 2);
+        char lastChar = description.charAt(description.length() - 1);
+        String name = description.substring(0, description.length() - 2);
 
         if (lastChar == '1') {
             return new FileDescription(name, true);
@@ -28,7 +43,7 @@ public class FileDescription {
 
     public FileDescription(String name, boolean directory) {
         this.name = name;
-        this.directory = directory;
+        this.isDirectory = directory;
     }
 
     public String getName() {
@@ -36,12 +51,16 @@ public class FileDescription {
     }
 
     public boolean isDirectory() {
-        return directory;
+        return isDirectory;
     }
 
+    /**
+     * Convert file description to string
+     * @return string with description
+     */
     @Override
     public String toString() {
-        if (directory) {
+        if (isDirectory) {
             return name + File.separator;
         } else {
             return name;

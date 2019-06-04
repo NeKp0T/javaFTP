@@ -8,12 +8,12 @@ import java.util.concurrent.Executors;
 
 import static com.example.ftp.client.RequestStatus.*;
 
+/**
+ * FPT Server that processes two requests:
+ * list — listing files in a directory on the server
+ * get — download file from server
+ */
 public class Server {
-
-    /**
-     * Port
-     */
-    private int port;
 
     /**
      * ThreadPool to do client request
@@ -21,17 +21,17 @@ public class Server {
     private ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     /**
-     * Thread to accept clients
+     * Thread for accepting clients
      */
     private Thread acceptingThread;
 
     /**
-     * Thread for read selector
+     * Thread for selector processing read requests
      */
     private Thread readingThread;
 
     /**
-     * Thread to write selector
+     * Thread for selector processing write requests
      */
     private Thread writhingThread;
 
@@ -41,26 +41,33 @@ public class Server {
     private InetSocketAddress address;
 
     /**
-     * Selector for reading
+     * Selector for processing read requests
      */
     private Selector readingSelector;
 
     /**
-     * Selector for writing
+     * Selector for processing write requests
      */
     private Selector writingSelector;
 
     /**
-     * Selector for writing
+     * Server Socket Channel
      */
     private ServerSocketChannel serverChannel;
 
 
+    /**
+     * Constructor for server
+     * @param address IP address of client
+     * @param port PORT in server to listen to
+     */
     public Server(String address, int port) {
-        this.port = port;
         this.address = new InetSocketAddress(address, port);
     }
 
+    /**
+     * Task for thread accepting new clients
+     */
     private class AcceptTask implements Runnable {
 
         @Override
@@ -77,14 +84,26 @@ public class Server {
         }
     }
 
+    /**
+     * States of selector
+     */
     private enum SelectorMode {
-        WRITE, READ;
+        WRITE, READ
     }
 
+    /**
+     * Task for thread processing read/write requests
+     */
     private class ReadWriteTask implements Runnable {
 
+        /**
+         * Read/write selector to get requests
+         */
         private Selector selector;
 
+        /**
+         * Mode of the selector
+         */
         private SelectorMode mode;
 
         ReadWriteTask(Selector selector, SelectorMode mode) {
@@ -105,7 +124,7 @@ public class Server {
                     var iterator = readyKeys.iterator();
 
                     while (iterator.hasNext()) {
-                        SelectionKey key = iterator.next();
+                        var key = iterator.next();
                         iterator.remove();
                         if (!key.isValid()) {
                             continue;
@@ -128,8 +147,14 @@ public class Server {
         }
     }
 
+    /**
+     * Task for client request submission
+     */
     private class RequestTask implements Runnable {
 
+        /**
+         * Information about client
+         */
         private ClientInfo clientInfo;
 
         public RequestTask(ClientInfo clientInfo) {
@@ -148,6 +173,10 @@ public class Server {
         }
     }
 
+    /**
+     * Starting server (starting three working threads and creating two selectors
+     * @throws IOException when can't open the selector
+     */
     public void start() throws IOException {
         readingSelector = Selector.open();
         writingSelector = Selector.open();
@@ -159,45 +188,69 @@ public class Server {
         acceptingThread.start();
     }
 
+    /**
+     * Accept new clients and subscribe them for reading
+     * @throws IOException when can't accept new client
+     */
     private void accept() throws IOException {
         System.out.println("accept started");
-        SocketChannel channel = serverChannel.accept();
+        var channel = serverChannel.accept();
         channel.configureBlocking(false);
         channel.register(readingSelector, SelectionKey.OP_READ, new ClientInfo(channel));
     }
 
+    /**
+     * Read request from client
+     * @param key identifier for client in selector
+     * @throws IOException when can't close client channel
+     */
     private void read(SelectionKey key) throws IOException {
         //System.out.println("read started");
-        ClientInfo clientInfo = (ClientInfo) key.attachment();
+        var clientInfo = (ClientInfo) key.attachment();
 
-        if (clientInfo.status == READING) {
-            clientInfo.read();
-        }
-
-        if (clientInfo.status == READ_FINISHED) {
-            clientInfo.status = SUBMITTING;
-            System.out.println(clientInfo.byteRead);
-            service.submit(new Server.RequestTask(clientInfo));
+        switch (clientInfo.status) {
+            case READING:
+                clientInfo.read();
+            case READ_FINISHED:
+                clientInfo.status = SUBMITTING;
+                service.submit(new Server.RequestTask(clientInfo));
+                break;
+            case FAILED:
+                clientInfo.channel.close();
+                break;
         }
     }
 
+    /**
+     * Write result of request to client
+     * @param key identifier for client in selector
+     * @throws IOException when can't close client channel
+     */
     private void write(SelectionKey key) throws IOException {
-//        System.out.println("write started");
-        ClientInfo clientInfo = (ClientInfo) key.attachment();
+        //System.out.println("write started");
+        var clientInfo = (ClientInfo) key.attachment();
 
-        if (clientInfo.status == WRITING) {
-            clientInfo.write();
-        }
-
-        if (clientInfo.status == WRITE_FINISHED) {
-            //clientInfo.request.status = NONE; //TODO unsubscribe
-            clientInfo.finishWriting();
-            key.interestOpsAnd(~SelectionKey.OP_READ);
+        switch (clientInfo.status) {
+            case WRITING:
+                clientInfo.write();
+            case WRITE_FINISHED:
+                clientInfo.finishWriting();
+                key.interestOpsAnd(~SelectionKey.OP_READ);
+                break;
+            case FAILED:
+                clientInfo.channel.close();
+                break;
         }
     }
 
+    /**
+     * List all files in directory with given path in format:
+     * size: Int (name: String is_dir: Boolean)*
+     * @param path to list files in it
+     * @return string with all listed files in formal
+     */
     public static String list(String path) {
-        String message = "";
+        StringBuilder message = new StringBuilder();
         File directory = new File(path);
         File[] files;
         if (directory.exists()) {
@@ -206,21 +259,28 @@ public class Server {
             } else {
                 files = directory.listFiles();
             }
-            message += files.length;
+            assert files != null;
+            message.append(files.length);
             for (var file : files) {
-                message += " (";
-                message += file.getName() + " ";
-                message += file.isDirectory() ? 1 : 0;
-                message += ")";
+                message.append(" (");
+                message.append(file.getName()).append(" ");
+                message.append(file.isDirectory() ? 1 : 0);
+                message.append(")");
             }
         } else {
-            message += -1;
+            message.append(-1);
         }
 
-        return message;
+        return message.toString();
     }
 
-    public static String readUsingBufferedReader(String fileName) throws IOException {
+    /**
+     * Write file content into string
+     * @param fileName to write content from
+     * @return string with content of given file
+     * @throws IOException when an error occurred while reading/writing/opening files
+     */
+    public static String getFileContent(String fileName) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
         String line;
         StringBuilder stringBuilder = new StringBuilder();
@@ -233,14 +293,23 @@ public class Server {
         return stringBuilder.toString();
     }
 
-
-    public static String get(String path) throws IOException {
+    /**
+     * Get content and size of given file in format:
+     * size: Long content: Bytes
+     * @param path to file to get information
+     * @return string with size and content for given file in format
+     */
+    public static String get(String path) {
         String message = "";
-        File file = new File(path);
-        if (file.exists() && file.isFile()) {
-            message += file.getTotalSpace() + " ";
-            message += readUsingBufferedReader(path);
-        } else {
+        try {
+            File file = new File(path);
+            if (file.exists() && file.isFile()) {
+                message += file.getTotalSpace() + " ";
+                message += getFileContent(path);
+            } else {
+                message += -1;
+            }
+        } catch (IOException e) {
             message += -1;
         }
         return message;
