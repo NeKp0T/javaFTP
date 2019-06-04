@@ -176,12 +176,13 @@ public class Server {
 
         if (clientInfo.status == READ_FINISHED) {
             clientInfo.status = SUBMITTING;
+            System.out.println(clientInfo.byteRead);
             service.submit(new Server.RequestTask(clientInfo));
         }
     }
 
     private void write(SelectionKey key) throws IOException {
-        System.out.println("write started");
+//        System.out.println("write started");
         ClientInfo clientInfo = (ClientInfo) key.attachment();
 
         if (clientInfo.status == WRITING) {
@@ -190,6 +191,8 @@ public class Server {
 
         if (clientInfo.status == WRITE_FINISHED) {
             //clientInfo.request.status = NONE; //TODO unsubscribe
+            clientInfo.finishWriting();
+            key.interestOpsAnd(~SelectionKey.OP_READ);
         }
     }
 

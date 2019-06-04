@@ -23,7 +23,7 @@ public class ClientInfo {
     public static CharsetEncoder encoder = charset.newEncoder();
     public static CharsetDecoder decoder = charset.newDecoder();
 
-    public int size;
+    public int size = -1;
 
     public int byteRead;
 
@@ -45,21 +45,30 @@ public class ClientInfo {
         idBuffer.clear();
         sizeBuffer.clear();
         pathBuffer.clear();
-        size = 0;
+        size = -1;
+        byteRead = 0;
+        byteWrite = 0;
     }
 
     public void read() throws IOException {
 
-        System.out.println(decoder.decode(idBuffer).toString());
-        byteRead += channel.read(bufferRead);
+//        System.out.println(decoder.decode(idBuffer).toString());
+        byteRead += channel.read(bufferRead); // TODO if it returns -1
+        System.out.println("Serv: Read " + byteRead + " bytes");
 
         if (size == -1 && byteRead >= 2 * SMALL_BUFFER_SIZE) {
+            sizeBuffer.flip();
+            idBuffer.flip();
             size = sizeBuffer.getInt();
             byteRead -= 2 * SMALL_BUFFER_SIZE;
+
+            System.out.println("Serv: Size " + size);
         }
 
         if (size != -1 && byteRead >= size) {
             status = READ_FINISHED;
+            pathBuffer.flip();
+
             System.out.println("request received");
         }
     }
@@ -76,6 +85,8 @@ public class ClientInfo {
     public void submit() throws IOException {
         var id = idBuffer.getInt();
         var path = decoder.decode(pathBuffer).toString();
+        System.out.println("Serv: Got path " + path + ", id " + id);
+
         String message = "";
         switch (id) {
             case 1 :
@@ -84,11 +95,28 @@ public class ClientInfo {
             case 2 :
                 message = Server.get(path);
                 break;
+            default:
+                System.out.println("Unknown id");
+                throw new IOException("Got wrong id"); // TODO mb make the exception class
         }
 
         byte[] result = message.getBytes(charset);
-        sizeBuffer = encoder.encode(CharBuffer.wrap(String.valueOf(message.getBytes().length)));
+
+        size = resultBuffer.limit() + sizeBuffer.limit();
+
+        sizeBuffer.clear();
+        sizeBuffer.putInt(result.length);
+        sizeBuffer.flip();
+//        sizeBuffer = encoder.encode(CharBuffer.wrap(String.valueOf(message.getBytes().length)));
+        resultBuffer.clear(); // probably already clear TODO delete
         resultBuffer.put(result);
-        size = result.length + 4;
+        resultBuffer.flip();
+
+        System.out.println("Serv: generated message size: " + size);
+    }
+
+    public void finishWriting() {
+        cleanBuffers();
+        status = READING;
     }
 }

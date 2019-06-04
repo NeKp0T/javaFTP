@@ -35,7 +35,7 @@ public class ClientApplication {
 
         try {
             Client client = Client.connect(address);
-            System.out.println(client.listRequest("/"));
+            System.out.println("Client: got list request answer: " + client.listRequest("/"));
         } catch (IOException e) {
             e.printStackTrace();
         }

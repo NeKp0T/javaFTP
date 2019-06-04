@@ -2,6 +2,7 @@ package com.example.ftp.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -12,7 +13,7 @@ import java.util.List;;
 public class Client {
 
     private static final int PORT = 2599;
-    private static final int BUFF_SIZE = 200;
+    private static final int BUFF_SIZE = 512;
 
 
     public static Charset charset = Charset.forName("UTF-8");
@@ -38,76 +39,53 @@ public class Client {
 
         ByteBuffer buffer = ByteBuffer.allocate(BUFF_SIZE);
         buffer.putInt(1);
-        buffer.putInt(path.getBytes().length);
+        buffer.putInt(requestBytes.length);
         buffer.put(requestBytes);
 
+        System.out.println("Buffer should have " + (8 + requestBytes.length) + " bytes, have " + buffer.position());
+
+        buffer.flip();
 
         while (buffer.hasRemaining()) {
             socketChannel.write(buffer);
         }
 
+        System.out.println("Request sent: " + path + ", total " + buffer.limit() + "bytes");
+
         buffer.clear();
+        ByteBuffer sizeBuffer = ByteBuffer.allocate(4);
 
-        System.out.println("Request sent: " + path);
+        ByteBuffer[] buffers = {sizeBuffer, buffer};
 
-        var wholeAnswerBuilder = new StringBuilder();
-
+        CharsetDecoder decoder = charset.newDecoder();
+        int read = 0;
+        int size = -1;
         while (true) {
-            CharsetDecoder decoder = charset.newDecoder();
-
-            int bytesRead = socketChannel.read(buffer);
+            int bytesRead = (int) socketChannel.read(buffers); // TODO int long
+            if (bytesRead != 0) {
+                System.out.println("Client: bytesRead " + bytesRead);
+            }
             if (bytesRead == -1) {
                 socketChannel.close();
                 break;
             }
-            buffer.flip();
-            String answer = decoder.decode(buffer).toString();
-            wholeAnswerBuilder.append(answer);
-            buffer.clear();
-
-            if (answer.length() != 0) {
-                System.out.println("Got: " + answer);
+            read += bytesRead;
+            if (size == -1 && read >= sizeBuffer.limit()) {
+                sizeBuffer.flip();
+                size = sizeBuffer.getInt();
+                System.out.println("Client: got size " + size);
             }
 
-            if (!answer.chars().allMatch(Character::isDigit)) {
+            if (size != -1 && read >= size) {
+                buffer.flip();
                 break;
             }
         }
 
-        String gotSoFar = wholeAnswerBuilder.toString();
+        String answer = decoder.decode(buffer).toString();
 
-        int size = Integer.parseInt(gotSoFar);
-        if (size < 0) {
-            return null;
-        }
-
-        int lengthRemaining = size - (gotSoFar.length() + Integer.toString(size).length());
-
-        while (true) {
-            CharsetDecoder decoder = charset.newDecoder();
-
-            int bytesRead = socketChannel.read(buffer);
-            if (bytesRead == -1) {
-                socketChannel.close();
-                break;
-            }
-            buffer.flip();
-            String answer = decoder.decode(buffer).toString();
-            wholeAnswerBuilder.append(answer);
-            buffer.clear();
-
-            lengthRemaining -= answer.chars().filter(c -> c == (int)')').count();
-
-            if (lengthRemaining == 0) {
-                break;
-            }
-        }
-
-        if (lengthRemaining < 0) {
-            System.out.println("Got too much");
-        }
-
-        return parseListRequest(wholeAnswerBuilder.toString());
+        System.out.println("Client: answer = " + answer);
+        return parseListRequest(answer);
     }
 
     private static List<String> parseListRequest(String answer) {
