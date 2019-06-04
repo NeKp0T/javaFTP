@@ -24,7 +24,7 @@ public class FileDescription {
      * @return Object with file description
      */
     @Nullable
-    public static FileDescription valueOf(String description) {
+    public static FileDescription parse(String description) {
         if (description.length() < 3) {
             return null;
         }
