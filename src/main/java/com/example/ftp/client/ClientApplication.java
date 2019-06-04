@@ -1,8 +1,8 @@
 package com.example.ftp.client;
 
+import com.example.ftp.server.Server;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Scanner;
 
 public class ClientApplication {
 

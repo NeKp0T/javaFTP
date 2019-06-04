@@ -1,4 +1,4 @@
-package com.example.ftp.client;
+package com.example.ftp.server;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -6,7 +6,7 @@ import java.nio.channels.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.example.ftp.client.RequestStatus.*;
+import static com.example.ftp.server.RequestStatus.*;
 
 public class Server {
 

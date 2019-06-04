@@ -17,7 +17,6 @@ public class Client {
 
 
     public static Charset charset = Charset.forName("UTF-8");
-    public static CharsetEncoder encoder = charset.newEncoder();
     public static CharsetDecoder decoder = charset.newDecoder();
 
     private final SocketChannel socketChannel;
@@ -57,7 +56,6 @@ public class Client {
 
         ByteBuffer[] buffers = {sizeBuffer, buffer};
 
-        CharsetDecoder decoder = charset.newDecoder();
         int read = 0;
         int size = -1;
         while (true) {

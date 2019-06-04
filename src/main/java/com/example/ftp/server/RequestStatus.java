@@ -1,4 +1,4 @@
-package com.example.ftp.client;
+package com.example.ftp.server;
 
 public enum  RequestStatus {
     READING, SUBMITTING, WRITING,

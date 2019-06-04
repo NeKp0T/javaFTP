@@ -1,14 +1,16 @@
-package com.example.ftp.client;
+package com.example.ftp.server;
+
+import com.example.ftp.server.RequestStatus;
+import com.example.ftp.server.Server;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 
-import static com.example.ftp.client.RequestStatus.*;
+import static com.example.ftp.server.RequestStatus.*;
 
 public class ClientInfo {
 
