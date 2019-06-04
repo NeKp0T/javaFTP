@@ -21,7 +21,7 @@ public class ClientApplication {
 
         new Thread(() -> {
             try {
-                serv.startServer();
+                serv.start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
