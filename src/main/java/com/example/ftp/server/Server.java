@@ -193,7 +193,7 @@ public class Server {
      * @throws IOException when can't accept new client
      */
     private void accept() throws IOException {
-        SocketChannel channel = serverChannel.accept();
+        var channel = serverChannel.accept();
         channel.configureBlocking(false);
         channel.register(readingSelector, SelectionKey.OP_READ, new ClientInfo(channel));
     }
@@ -249,8 +249,8 @@ public class Server {
      * @return string with all listed files in formal
      */
     public static String list(String path) {
-        StringBuilder message = new StringBuilder();
-        File directory = new File(path);
+        var message = new StringBuilder();
+        var directory = new File(path);
         File[] files;
         if (directory.exists()) {
             if (directory.isFile()) {
@@ -280,9 +280,9 @@ public class Server {
      * @throws IOException when an error occurred while reading/writing/opening files
      */
     public static String getFileContent(String fileName) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        var reader = new BufferedReader(new FileReader(fileName));
+        var stringBuilder = new StringBuilder();
         String line;
-        StringBuilder stringBuilder = new StringBuilder();
         String ls = System.getProperty("line.separator");
         while((line = reader.readLine()) != null) {
             stringBuilder.append(line);

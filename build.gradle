@@ -1,11 +1,13 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.7'
 }
 
-group 'com.example'
+group 'com.example.ftp'
 version '1.0'
 
-
+mainClassName = 'com.example.ftp.GUI.ClientApplication'
 sourceCompatibility = 11
 
 repositories {
@@ -30,4 +32,9 @@ test {
         events 'PASSED', 'FAILED', 'SKIPPED'
 //        events 'FAILED', 'SKIPPED'
     }
+}
+
+javafx {
+    version = "11.0.2"
+    modules = [ 'javafx.controls' ]
 }

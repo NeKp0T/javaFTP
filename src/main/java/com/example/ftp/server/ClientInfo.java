@@ -1,8 +1,5 @@
 package com.example.ftp.server;
 
-import com.example.ftp.server.RequestStatus;
-import com.example.ftp.server.Server;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -136,6 +133,9 @@ public class ClientInfo {
         }
     }
 
+    /**
+     * Write result of request to client
+     */
     public void write() {
         try {
             byteWrite += channel.write(bufferWrite);
@@ -151,6 +151,9 @@ public class ClientInfo {
         }
     }
 
+    /**
+     * Submit request client task
+     */
     public void submit() {
         try {
             var id = idBuffer.getInt();
@@ -188,6 +191,9 @@ public class ClientInfo {
         }
     }
 
+    /**
+     * Finish one session
+     */
     public void finishWriting() {
         clean();
         status = READING;
