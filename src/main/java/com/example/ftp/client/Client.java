@@ -138,7 +138,7 @@ public class Client {
         }
 
         int beginning = answer.indexOf("(");
-        String contents = answer.substring(beginning + 1, answer.length() - beginning - 2);
+        String contents = answer.substring(beginning + 1, answer.length() - 1);
 
         String[] splitted = contents.split("\\) \\(");
 
