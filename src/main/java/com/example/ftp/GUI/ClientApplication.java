@@ -2,6 +2,7 @@ package com.example.ftp.GUI;
 
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -11,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 public class ClientApplication extends Application {
     private static final int SCENE_HEIGHT = 600;
@@ -67,29 +69,33 @@ public class ClientApplication extends Application {
         return menu;
     }
 
-    private class FileDescription {
-        public String fileName;
+    private static class FileDescription {
+        private final SimpleStringProperty fileName;
 
-        public FileDescription(String fileName) {
-            this.fileName = fileName;
+        public FileDescription(String name) {
+            this.fileName = new SimpleStringProperty(name);
         }
 
         public String getFileName() {
-            return fileName;
+            return fileName.get();
+        }
+        public void setFileName(String fName) {
+            fileName.set(fName);
         }
     }
 
     private VBox createFilesBox() {
         VBox filesBox = new VBox();
 
-        TableColumn<FileDescription, String> firstNameCol = new TableColumn<>("Files");
+        TableColumn<FileDescription, String> firstNameCol = new TableColumn<>("fileName");
         firstNameCol.setCellValueFactory(
-                new PropertyValueFactory<>("fileName")
+                new PropertyValueFactory<FileDescription, String>("fileName")
         );
+        table.setEditable(true);
         firstNameCol.setMinWidth(700);
-        table.setOnMouseClicked(event1 -> System.out.println(table.getSelectionModel().getSelectedItem().getFileName()));
+        //table.setOnMouseClicked(event1 -> System.out.println(table.getSelectionModel().getSelectedItem().getFileName()));
         table.setItems(files);
-        table.getColumns().addAll(firstNameCol);
+        table.getColumns().add(firstNameCol);
         filesBox.getChildren().add(table);
         return filesBox;
     }
