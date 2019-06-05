@@ -54,13 +54,15 @@ public class ClientApplication extends Application {
         saveButton.setOnAction(event -> {
             System.out.println("creating server, IP = " + IP.getText());
             server = new Server(IP.getText());
-            new Thread(() -> {
+            var serverThread = new Thread(() -> {
                 try {
                     server.start();
                 } catch (IOException e) {
                     serverWarning.setText("error");
                 }
-            }).start();
+            });
+            serverThread.setDaemon(true);
+            serverThread.start();
         });
         menu.getChildren().addAll(label, IP, serverWarning, saveButton);
         return menu;
@@ -196,6 +198,7 @@ public class ClientApplication extends Application {
             return;
         }
         files.clear();
+            files.add(new FileDescription("..", -1));
         for (int i = 0; i < model.getDirectories().size(); i++) {
             files.add(new FileDescription(model.getDirectories().get(i).getName(), i));
         }
