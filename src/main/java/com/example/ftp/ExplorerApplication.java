@@ -1,6 +1,6 @@
 package com.example.ftp;
 
-import com.example.ftp.model.ConnectionException;
+import com.example.ftp.model.implementations.ConnectionException;
 import com.example.ftp.model.DirectoryModel;
 import com.example.ftp.model.DirectoryView;
 import com.example.ftp.model.FileView;

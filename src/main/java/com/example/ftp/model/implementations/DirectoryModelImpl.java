@@ -8,6 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * An implementation of DirectoryModel that uses Server as a filesystem provider.
+ *
+ * Since protocol does not provide any means of determining server's file separator it
+ * assumes separator to be <code>'/'</code>.
+ */
 public class DirectoryModelImpl implements DirectoryModel {
     private final Client client;
     private List<FileView> files;
@@ -15,6 +21,11 @@ public class DirectoryModelImpl implements DirectoryModel {
 
     private String currentPath;
 
+    /**
+     * Constructs a new DirectoryModelImpl connected to a server running on a provided address.
+     * @param address address of a server to connect
+     * @throws ConnectionException if could not connect to a server
+     */
     public DirectoryModelImpl(String address) throws ConnectionException {
         try {
             client = Client.connect(address);
@@ -139,10 +150,9 @@ public class DirectoryModelImpl implements DirectoryModel {
         if (currentPath.length() == 0) {
             return OpenResult.WRONG_PATH;
         }
-        char separator = currentPath.charAt(currentPath.length() - 1);
         int prevSeparator = currentPath
                 .substring(0, currentPath.length() - 1)
-                .lastIndexOf(separator);
+                .lastIndexOf('/');
         if (prevSeparator == -1) {
             return OpenResult.WRONG_PATH;
         }

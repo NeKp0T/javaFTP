@@ -4,7 +4,9 @@ import com.example.ftp.client.GetRequestAnswer;
 
 import java.util.List;
 
-// TODO docs
+/**
+ * An interface for providers of basic filesystem-exploring functionality.
+ */
 public interface DirectoryModel {
     /**
      * A getter for list of files in current directory which are not directories.
@@ -47,7 +49,7 @@ public interface DirectoryModel {
 
     /**
      * Tries to open a subdirectory by name.
-     * @param name path to open
+     * @param name name if subdirectory to open
      * @return information on success
      */
     OpenResult openSubdirectory(String name);
