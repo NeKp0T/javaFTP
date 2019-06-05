@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
 
 public class ClientApplication extends Application {
     private static final int SCENE_HEIGHT = 600;
@@ -87,10 +88,11 @@ public class ClientApplication extends Application {
     private VBox createFilesBox() {
         VBox filesBox = new VBox();
 
-        TableColumn<FileDescription, String> firstNameCol = new TableColumn<>("Files");
+        TableColumn<FileDescription, String> firstNameCol = new TableColumn<>("fileName");
         firstNameCol.setCellValueFactory(
-                new PropertyValueFactory<>("fileName")
+                new PropertyValueFactory<FileDescription, String>("fileName")
         );
+        table.setEditable(true);
         firstNameCol.setMinWidth(700);
         table.setEditable(true);
         table.setOnMouseClicked(event1 -> System.out.println(table.getSelectionModel().getSelectedItem().getFileName()));
