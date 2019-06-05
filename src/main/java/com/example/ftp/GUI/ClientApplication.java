@@ -1,6 +1,10 @@
 package com.example.ftp.GUI;
 
 
+import com.example.ftp.model.DirectoryModel;
+import com.example.ftp.model.implementations.ConnectionException;
+import com.example.ftp.model.implementations.DirectoryModelImpl;
+import com.example.ftp.server.Server;
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -12,11 +16,15 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public class ClientApplication extends Application {
     private static final int SCENE_HEIGHT = 600;
     private static final int SCENE_WIDTH = 800;
+
+    private DirectoryModel model;
+    private Server server;
 
     public static void main(String[] args){
         launch(args);
@@ -24,22 +32,33 @@ public class ClientApplication extends Application {
     private TableView<FileDescription> table = new TableView<>();
 
     private final ObservableList<FileDescription> files =
-            FXCollections.observableArrayList(new FileDescription("Jacob1"), new FileDescription("Jacob2"), new FileDescription("Jacob3"));
+            FXCollections.observableArrayList(new FileDescription("Jacob1", 0), new FileDescription("Jacob2", 1), new FileDescription("Jacob3", 2));
 
     private VBox createServerMenu() {
         VBox menu = new VBox();
         Label label = new Label();
         label.setText("Server PORT:");
-        TextArea port = new TextArea();
-        port.setPrefColumnCount(10);
-        port.setPrefRowCount(3);
+//        TextArea port = new TextArea();
+//        port.setPrefColumnCount(10);
+//        port.setPrefRowCount(3);
         label.setText("Server IP:");
         TextArea IP = new TextArea();
         IP.setPrefColumnCount(10);
         IP.setPrefRowCount(3);
         Button saveButton = new Button("Save");
-        saveButton.setOnAction(event -> { });
-        menu.getChildren().addAll(label, port, IP, saveButton);
+        saveButton.setOnAction(event -> {
+            System.out.println("creating server, IP = " + IP.getText());
+            server = new Server(IP.getText(), 2599); // TODO make server always use this port and make it some constant
+            new Thread(() -> {
+                try {
+                    server.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        });
+//        menu.getChildren().addAll(label, port, IP, saveButton);
+        menu.getChildren().addAll(label, IP, saveButton);
         return menu;
     }
 
@@ -51,7 +70,18 @@ public class ClientApplication extends Application {
         IP.setPrefColumnCount(10);
         IP.setPrefRowCount(3);
         Button saveButton = new Button("Save");
-        saveButton.setOnAction(event -> { });
+        saveButton.setOnAction(event -> {
+            try {
+                if (model == null) { // TODO unregister old one if present
+                    System.out.println("creating client, IP = " + IP.getText());
+                    model = new DirectoryModelImpl(IP.getText());
+                    updateFiles();
+                }
+            } catch (ConnectionException e) {
+                e.printStackTrace();
+                // TODO notify user somehow
+            }
+        });
         menu.getChildren().addAll(label, IP, saveButton);
         return menu;
     }
@@ -64,16 +94,23 @@ public class ClientApplication extends Application {
         path.setPrefColumnCount(10);
         path.setPrefRowCount(3);
         Button sendButton = new Button("Send");
-        sendButton.setOnAction(event -> { });
+        sendButton.setOnAction(event -> {
+            if (model != null) {
+                model.openDirectoryByAbsolutePath(path.getText());
+                updateFiles();
+            }
+        });
         menu.getChildren().addAll(label, path, sendButton);
         return menu;
     }
 
     public class FileDescription {
         public final SimpleStringProperty fileName;
+        private final int number;
 
-        public FileDescription(String fileName) {
+        public FileDescription(String fileName, int number) {
             this.fileName = new SimpleStringProperty(fileName);
+            this.number = number;
         }
 
         public String getFileName() {
@@ -83,6 +120,10 @@ public class ClientApplication extends Application {
         public void setFileName(String fName) { // TODO delete or at least rename argument
             fileName.set(fName);
         }
+
+        public int getNumber() {
+            return number;
+        }
     }
 
     private VBox createFilesBox() {
@@ -90,12 +131,17 @@ public class ClientApplication extends Application {
 
         TableColumn<FileDescription, String> firstNameCol = new TableColumn<>("fileName");
         firstNameCol.setCellValueFactory(
-                new PropertyValueFactory<FileDescription, String>("fileName")
+                new PropertyValueFactory<>("fileName")
         );
         table.setEditable(true);
         firstNameCol.setMinWidth(700);
         table.setEditable(true);
-        table.setOnMouseClicked(event1 -> System.out.println(table.getSelectionModel().getSelectedItem().getFileName()));
+        table.setOnMouseClicked(event1 ->  {
+            if (model != null) {
+                model.openDirectory(table.getSelectionModel().getSelectedItem().getNumber());
+                updateFiles();
+            }
+        });
         table.setItems(files);
         table.getColumns().add(firstNameCol);
         filesBox.getChildren().add(table);
@@ -135,5 +181,18 @@ public class ClientApplication extends Application {
         mainPanel.setDividerPositions(0.8);
 
         root.getChildren().add(mainPanel);
+    }
+
+    private void updateFiles() {
+        if (model == null) {
+            return;
+        }
+        files.clear();
+        for (int i = 0; i < model.getDirectories().size(); i++) {
+            files.add(new FileDescription(model.getDirectories().get(i).getName(), i));
+        }
+        for (int i = 0; i < model.getFiles().size(); i++) {
+            files.add(new FileDescription(model.getFiles().get(i).getName(), i));
+        }
     }
 }
