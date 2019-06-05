@@ -16,6 +16,11 @@ import static com.example.ftp.server.RequestStatus.*;
 public class Server {
 
     /**
+     * Listening port for requests Port
+     */
+    private static final int PORT = 2599;
+
+    /**
      * ThreadPool to do client request
      */
     private ExecutorService service = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -59,10 +64,9 @@ public class Server {
     /**
      * Constructor for server
      * @param address IP address of client
-     * @param port PORT in server to listen to
      */
-    public Server(String address, int port) {
-        this.address = new InetSocketAddress(address, port);
+    public Server(String address) {
+        this.address = new InetSocketAddress(address, PORT);
     }
 
     /**

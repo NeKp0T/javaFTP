@@ -22,7 +22,7 @@ public class ClientApplication {
 //            address = scanner.next();
 //        }
 
-        var serv = new Server("127.0.0.1", 2599);
+        var serv = new Server("127.0.0.1");
 
         new Thread(() -> {
             try {

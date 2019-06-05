@@ -81,7 +81,6 @@ public class DirectoryModelImpl implements DirectoryModel {
      */
     @Override
     public OpenResult openDirectoryByAbsolutePath(String path) {
-
         ListRequestAnswer answer;
         try {
             answer = client.listRequest(path);
