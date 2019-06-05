@@ -2,6 +2,7 @@ package com.example.ftp.GUI;
 
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
@@ -67,15 +68,19 @@ public class ClientApplication extends Application {
         return menu;
     }
 
-    private class FileDescription {
-        public String fileName;
+    public class FileDescription {
+        public final SimpleStringProperty fileName;
 
         public FileDescription(String fileName) {
-            this.fileName = fileName;
+            this.fileName = new SimpleStringProperty(fileName);
         }
 
         public String getFileName() {
-            return fileName;
+            return fileName.get();
+        }
+
+        public void setFileName(String fName) { // TODO delete or at least rename argument
+            fileName.set(fName);
         }
     }
 
@@ -87,9 +92,10 @@ public class ClientApplication extends Application {
                 new PropertyValueFactory<>("fileName")
         );
         firstNameCol.setMinWidth(700);
+        table.setEditable(true);
         table.setOnMouseClicked(event1 -> System.out.println(table.getSelectionModel().getSelectedItem().getFileName()));
         table.setItems(files);
-        table.getColumns().addAll(firstNameCol);
+        table.getColumns().add(firstNameCol);
         filesBox.getChildren().add(table);
         return filesBox;
     }
@@ -118,6 +124,8 @@ public class ClientApplication extends Application {
         VBox clientMenu = createClientMenu();
         VBox pathMenu = createPathMenu();
         VBox files = createFilesBox();
+
+        ((Group) scene.getRoot()).getChildren().addAll(files);
 
         menuPanel.getItems().addAll(serverMenu, clientMenu, pathMenu);
         menuPanel.setDividerPositions(0.3, 0.3);
