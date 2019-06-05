@@ -185,10 +185,13 @@ public class Server {
         readingSelector = Selector.open();
         writingSelector = Selector.open();
         readingThread = new Thread(new ReadWriteTask(readingSelector, SelectorMode.READ));
+        readingThread.setDaemon(true);
         readingThread.start();
         writhingThread = new Thread(new ReadWriteTask(writingSelector, SelectorMode.WRITE));
+        writhingThread.setDaemon(true);
         writhingThread.start();
         acceptingThread = new Thread(new AcceptTask());
+        acceptingThread.setDaemon(true);
         acceptingThread.start();
     }
 

@@ -173,18 +173,22 @@ public class ClientInfo {
                     System.out.println("Unknown id");
             }
 
-        byte[] result = message.getBytes(charset);
+            byte[] result = message.getBytes(charset);
 
-        sizeBuffer.clear();
-        sizeBuffer.putInt(result.length);
-        sizeBuffer.flip();
-        resultBuffer.clear(); // probably already clear TODO delete
-        resultBuffer.put(result);
-        resultBuffer.flip();
+            sizeBuffer.clear();
+            sizeBuffer.putInt(result.length);
+            sizeBuffer.flip();
+            resultBuffer.clear(); // probably already clear TODO delete
+            if (resultBuffer.limit() < result.length) {
+                resultBuffer = ByteBuffer.allocate(result.length);
+                bufferWrite[1] = resultBuffer;
+            }
+            resultBuffer.put(result);
+            resultBuffer.flip();
 
-        size = resultBuffer.limit() + sizeBuffer.limit();
+            size = resultBuffer.limit() + sizeBuffer.limit();
 
-        System.out.println("Serv: generated message size: " + size);
+            System.out.println("Serv: generated message size: " + size);
         } catch (CharacterCodingException e) {
             clean();
             status = FAILED;

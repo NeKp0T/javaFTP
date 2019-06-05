@@ -1,6 +1,8 @@
 package com.example.ftp.GUI;
 
 
+import com.example.ftp.client.GetRequestAnswer;
+import com.example.ftp.client.RequestStatus;
 import com.example.ftp.model.DirectoryModel;
 import com.example.ftp.model.implementations.ConnectionException;
 import com.example.ftp.model.implementations.DirectoryModelImpl;
@@ -14,6 +16,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -41,7 +44,7 @@ public class ClientApplication extends Application {
     private TableView<FileDescription> table = new TableView<>();
 
     private final ObservableList<FileDescription> files =
-            FXCollections.observableArrayList(new FileDescription("", 0));
+            FXCollections.observableArrayList(new FileDescription("", false, 0));
 
     private VBox createServerMenu() {
         VBox menu = new VBox();
@@ -121,10 +124,12 @@ public class ClientApplication extends Application {
 
     public class FileDescription {
         public final SimpleStringProperty fileName;
+        public final boolean isDirectory;
         private final int number;
 
-        public FileDescription(String fileName, int number) {
+        public FileDescription(String fileName, boolean isDirectory, int number) {
             this.fileName = new SimpleStringProperty(fileName);
+            this.isDirectory = isDirectory;
             this.number = number;
         }
 
@@ -147,7 +152,13 @@ public class ClientApplication extends Application {
         fileCol.setMinWidth(700);
         table.setOnMouseClicked(event1 ->  {
             if (model != null) {
-                model.openDirectory(table.getSelectionModel().getSelectedItem().getNumber());
+                FileDescription clickedFile = table.getSelectionModel().getSelectedItem();
+                if (clickedFile.isDirectory) {
+                    model.openDirectory(clickedFile.getNumber());
+                } else {
+                    GetRequestAnswer contentGet = model.getFileContents(clickedFile.getNumber());
+                    showFile(contentGet, event1.getX(), event1.getY());
+                }
                 updateFiles();
                 fileCol.setText(model.getCurrentPath());
             }
@@ -156,6 +167,44 @@ public class ClientApplication extends Application {
         table.getColumns().add(fileCol);
         filesBox.getChildren().addAll(table);
         return filesBox;
+    }
+
+    private void showFile(GetRequestAnswer contentGet, double x, double y) {
+        String show;
+        switch (contentGet.status) {
+            case OK:
+                show = contentGet.contents;
+                break;
+            case ERROR:
+                show = "An error while getting content";
+                break;
+            case WRONG_PATH:
+                show = "Incorrect path";
+                break;
+            case CRITICAL_ERROR:
+                show = "A critical error while getting content";
+                break;
+            default:
+                throw new RuntimeException("switch missing statement"); // should not happen
+        }
+
+        Label secondLabel = new Label(show);
+
+        var secondaryLayout = new ScrollPane();
+        secondaryLayout.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        secondaryLayout.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        secondaryLayout.setContent(secondLabel);
+
+        Scene secondScene = new Scene(secondaryLayout, 800, 600);
+
+        Stage newWindow = new Stage();
+        newWindow.setTitle("File size " + contentGet.size);
+        newWindow.setScene(secondScene);
+
+        newWindow.setX(x);
+        newWindow.setY(y);
+
+        newWindow.show();
     }
 
     @Override
@@ -198,12 +247,12 @@ public class ClientApplication extends Application {
             return;
         }
         files.clear();
-            files.add(new FileDescription("..", -1));
+            files.add(new FileDescription("..", true, -1));
         for (int i = 0; i < model.getDirectories().size(); i++) {
-            files.add(new FileDescription(model.getDirectories().get(i).getName(), i));
+            files.add(new FileDescription(model.getDirectories().get(i).getName(), true, i));
         }
         for (int i = 0; i < model.getFiles().size(); i++) {
-            files.add(new FileDescription(model.getFiles().get(i).getName(), i));
+            files.add(new FileDescription(model.getFiles().get(i).getName(), false, i));
         }
     }
 }
