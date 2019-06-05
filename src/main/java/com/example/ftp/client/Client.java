@@ -7,19 +7,29 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
-;
 
+/**
+ * A client to connect to a Server. It provides a simple FTP-like interface.
+ * It supports only two types of requests - list and get.
+ *
+ * This implementation uses non-blocking channels, but simply waits for them to finish
+ * like a blocking architecture.
+ */
 public class Client {
 
     private static final int PORT = 2599;
-    private static final int BUFF_SIZE = 128;
 
-
-    public static Charset charset = Charset.forName("UTF-8");
-    public static CharsetDecoder decoder = charset.newDecoder();
+    private static Charset charset = Charset.forName("UTF-8");
+    private static CharsetDecoder decoder = charset.newDecoder();
 
     private final SocketChannel socketChannel;
 
+    /**
+     * Constructs a new Client connected to a server by a provided address.
+     * @param address address of a server to conect to
+     * @return a newly constructed Client
+     * @throws IOException if connection failed
+     */
     public static Client connect(String address) throws IOException {
         SocketChannel socketChannel = SocketChannel.open();
         socketChannel.configureBlocking(false);
@@ -31,6 +41,12 @@ public class Client {
         return new Client(socketChannel);
     }
 
+    /**
+     * Gets a description of files in a specified directory from a server.
+     * @param path path to a directory to list files in
+     * @return description of files in a directory
+     * @throws IOException if an exception occurs during networking
+     */
     public ListRequestAnswer listRequest(String path) throws IOException {
         ByteBuffer buffer = sendRequest(1, path);
 
@@ -40,6 +56,12 @@ public class Client {
         return parseListRequest(answer);
     }
 
+    /**
+     * Gets a specified file's contents from a server.
+     * @param path path to a file to get
+     * @return specified file's contents or an error description
+     * @throws IOException if an exception occurs during networking
+     */
     public GetRequestAnswer getRequest(String path) throws IOException {
         ByteBuffer buffer = sendRequest(2, path);
 
@@ -104,7 +126,6 @@ public class Client {
             }
 
             if (bytesRead == -1) {
-//                socketChannel.close();
                 break;
             }
             read += bytesRead;
@@ -166,7 +187,7 @@ public class Client {
         try {
             fileSize = Long.parseLong(answer.substring(0, longEnd));
         } catch (NumberFormatException e) {
-            return new GetRequestAnswer(0, null, RequestStatus.CRITICAL_ERROR);
+            return GetRequestAnswer.error();
         }
 
         if (fileSize == -1) {
@@ -174,7 +195,7 @@ public class Client {
         }
 
         if (longEnd + 1 > answer.length()) {
-            return new GetRequestAnswer(fileSize, "", RequestStatus.ERROR);
+            return new GetRequestAnswer(fileSize, null, RequestStatus.ERROR);
         }
 
         return new GetRequestAnswer(fileSize, answer.substring(longEnd + 1), RequestStatus.OK);

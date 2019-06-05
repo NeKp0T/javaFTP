@@ -6,10 +6,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 
 public class GetRequestAnswer {
+    /**
+     * Size of file, or <code>-1</code> if this file does not exist.
+     */
     @NotNull
     public final long size;
+
+    /**
+     * File's content or null if file does not exist or request finished with any error.
+     */
     @Nullable
     public final String contents;
+
+    /**
+     * Status of request.
+     */
     @NotNull
     public final RequestStatus status;
 
@@ -17,6 +28,10 @@ public class GetRequestAnswer {
         this.size = size;
         this.contents = contents;
         this.status = status;
+    }
+
+    public static GetRequestAnswer error() {
+        return new GetRequestAnswer(0, null, RequestStatus.CRITICAL_ERROR);
     }
 
     @Override

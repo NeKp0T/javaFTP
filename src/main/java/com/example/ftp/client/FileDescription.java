@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 /**
- * Holder for file(directory) description
+ * Holder for file (or directory) description
  */
 public class FileDescription {
     /**
@@ -41,27 +41,40 @@ public class FileDescription {
         return null;
     }
 
+    /**
+     * Constructs a new FileDescription with provided parameters
+     * @param name      name of a described file
+     * @param directory whether this file is a directory
+     */
     public FileDescription(String name, boolean directory) {
         this.name = name;
         this.isDirectory = directory;
     }
 
+    /**
+     * A gettor for a file's name
+     * @return file's name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Determines whether it is a directory
+     * @return whether file a directory
+     */
     public boolean isDirectory() {
         return isDirectory;
     }
 
     /**
-     * Convert file description to string
-     * @return string with description
+     * Convert file description to a string
+     * @return file's name or file's name + '/' if it is a directory
      */
     @Override
     public String toString() {
         if (isDirectory) {
-            return name + File.separator;
+            return name + "/";
         } else {
             return name;
         }

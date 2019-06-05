@@ -212,7 +212,6 @@ public class Server {
             case READ_FINISHED:
                 clientInfo.status = SUBMITTING;
                 service.submit(new Server.RequestTask(clientInfo));
-                key.interestOpsAnd(~SelectionKey.OP_READ);
                 break;
             case FAILED:
                 clientInfo.channel.close();
@@ -234,7 +233,7 @@ public class Server {
                 clientInfo.write();
             case WRITE_FINISHED:
                 clientInfo.finishWriting();
-                key.interestOpsAnd(~SelectionKey.OP_WRITE);
+                key.interestOpsAnd(~SelectionKey.OP_WRITE); // fixed bug
                 break;
             case FAILED:
                 clientInfo.channel.close();
